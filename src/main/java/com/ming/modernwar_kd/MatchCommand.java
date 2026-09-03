@@ -68,7 +68,7 @@ public class MatchCommand {
         MatchManager.startMatch(server);
         int count = MatchManager.getMatchPlayers().size();
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7aMatch started! \u00a7e%d player(s) \u00a77recorded.",
+                String.format("\u00a76[现代战争] \u00a7a对局已开始! \u00a7e%d 名玩家 \u00a77已记录。",
                         count)), false);
         return 1;
     }
@@ -76,7 +76,7 @@ public class MatchCommand {
     private static int endMatch(CommandSourceStack source, String team) {
         int uploaded = MatchManager.endMatch(team, source.getServer());
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7aMatch ended. \u00a7eTeam %s \u00a77wins. \u00a7e%d player(s) \u00a77uploaded to API.",
+                String.format("\u00a76[现代战争] \u00a7a对局已结束。 \u00a7e%s 队 \u00a77获胜。 \u00a7e%d 名玩家 \u00a77已上传到 API。",
                         team.toUpperCase(), uploaded)), false);
         return 1;
     }
@@ -85,29 +85,29 @@ public class MatchCommand {
         int result = MatchManager.addPlayerToMatch(player, team);
         if (result < 0) {
             source.sendSuccess(() -> Component.literal(
-                    String.format("\u00a76[ModernWar] \u00a7cNo active match or invalid team.")), false);
+                    String.format("\u00a76[现代战争] \u00a7c当前没有进行中的对局或队伍无效。")), false);
             return 0;
         }
         if (result == 0) {
             source.sendSuccess(() -> Component.literal(
-                    String.format("\u00a76[ModernWar] \u00a7e%s \u00a77already in match.", player.getScoreboardName())), false);
+                    String.format("\u00a76[现代战争] \u00a7e%s \u00a77已在对局中。", player.getScoreboardName())), false);
             return 1;
         }
         String teamLabel = team.toUpperCase();
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7e%s \u00a77joined \u00a7bTeam %s\u00a77.", player.getScoreboardName(), teamLabel)), false);
+                String.format("\u00a76[现代战争] \u00a7e%s \u00a77已加入 \u00a7b%s 队\u00a77。", player.getScoreboardName(), teamLabel)), false);
         return 1;
     }
 
     private static int showStatus(CommandSourceStack source) {
         if (!MatchManager.isMatchActive()) {
-            source.sendSuccess(() -> Component.literal("\u00a76[ModernWar] \u00a77No active match."), false);
+            source.sendSuccess(() -> Component.literal("\u00a76[现代战争] \u00a77当前没有进行中的对局。"), false);
             return 0;
         }
 
         long seconds = MatchManager.getMatchDuration() / 1000;
         source.sendSuccess(() -> Component.literal(String.format(
-                "\u00a76[ModernWar] \u00a7aMatch active (elapsed %d s) \u00a77- %d player(s)",
+                "\u00a76[现代战争] \u00a7a对局进行中 (已进行 %d 秒) \u00a77- 共 %d 名玩家",
                 seconds, MatchManager.getMatchPlayers().size())), false);
 
         for (var uuid : MatchManager.getMatchPlayers()) {
@@ -115,7 +115,7 @@ public class MatchCommand {
             if (snap == null) continue;
             String team = MatchManager.getTeam(uuid).toUpperCase();
             source.sendSuccess(() -> Component.literal(String.format(
-                    "\u00a7e  %s \u00a77(Team %s) \u00a77- K:%d D:%d",
+                    "\u00a7e  %s \u00a77(%s 队) \u00a77- 击杀:%d 死亡:%d",
                     snap.playerName(), team, snap.kills(), snap.deaths())), false);
         }
         return 1;

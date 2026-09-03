@@ -116,25 +116,25 @@ public class KDCommand {
 
     private static void sendStatsMessage(CommandSourceStack source, String name, PlayerStats stats) {
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7e%s \u00a77- K: \u00a7c%d \u00a77A: \u00a7a%d \u00a77D: \u00a74%d \u00a77W: \u00a72%d \u00a77L: \u00a7c%d \u00a77H: \u00a7e%d",
+                String.format("\u00a76[现代战争] \u00a7e%s \u00a77- 击杀: \u00a7c%d \u00a77助攻: \u00a7a%d \u00a77死亡: \u00a74%d \u00a77胜场: \u00a72%d \u00a77负场: \u00a7c%d \u00a77爆头: \u00a7e%d",
                         name, stats.getKills(), stats.getAssists(), stats.getDeaths(),
                         stats.getWins(), stats.getLosses(), stats.getHeads())), false);
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76         \u00a77Matches: \u00a7b%d \u00a77| KD: \u00a7b%.2f",
+                String.format("\u00a76         \u00a77场次: \u00a7b%d \u00a77| 击杀/死亡比: \u00a7b%.2f",
                         stats.getMatches(), stats.getApiKD())), false);
     }
 
     private static int showTopKD(CommandSourceStack source, int count) {
         List<Map.Entry<UUID, PlayerStats>> top = PlayerStatsManager.getTopKD(count);
 
-        source.sendSuccess(() -> Component.literal("\u00a76\u00a7l===== ModernWar KD Top " + count + " ====="), false);
+        source.sendSuccess(() -> Component.literal("\u00a76\u00a7l===== 现代战争 KD 排行榜前 " + count + " ====="), false);
 
         int rank = 1;
         for (Map.Entry<UUID, PlayerStats> entry : top) {
             PlayerStats stats = entry.getValue();
             String name = source.getServer().getProfileCache()
                     .get(entry.getKey()).map(p -> p.getName()).orElse("?");
-            String line = String.format("\u00a77#%d \u00a7e%s \u00a77- K:\u00a7c%d W:\u00a72%d L:\u00a7c%d H:\u00a7e%d KD:\u00a7b%.2f",
+            String line = String.format("\u00a77#%d \u00a7e%s \u00a77- 击杀:\u00a7c%d 胜:\u00a72%d 负:\u00a7c%d 爆头:\u00a7e%d KD:\u00a7b%.2f",
                     rank++, name,
                     stats.getKills(), stats.getWins(), stats.getLosses(),
                     stats.getHeads(), stats.getApiKD());
@@ -142,7 +142,7 @@ public class KDCommand {
         }
 
         if (top.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("\u00a77No stats recorded yet."), false);
+            source.sendSuccess(() -> Component.literal("\u00a77尚未有任何战绩记录。"), false);
         }
         return 1;
     }
@@ -154,7 +154,7 @@ public class KDCommand {
         PlayerStats stats = PlayerStatsManager.getStats(player.getUUID());
         stats.addWins(count);
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7a+%d win(s) \u00a77for \u00a7e%s \u00a77\u2192 Matches: %d, KD: %.2f",
+                String.format("\u00a76[现代战争] \u00a7a+%d 胜场 \u00a77已记录给 \u00a7e%s \u00a77\u2192 场次: %d, KD: %.2f",
                         count, player.getScoreboardName(), stats.getMatches(), stats.getApiKD())), false);
         return 1;
     }
@@ -164,7 +164,7 @@ public class KDCommand {
         PlayerStats stats = PlayerStatsManager.getStats(player.getUUID());
         stats.addLosses(count);
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7c+%d loss(es) \u00a77for \u00a7e%s \u00a77\u2192 Matches: %d, KD: %.2f",
+                String.format("\u00a76[现代战争] \u00a7c+%d 负场 \u00a77已记录给 \u00a7e%s \u00a77\u2192 场次: %d, KD: %.2f",
                         count, player.getScoreboardName(), stats.getMatches(), stats.getApiKD())), false);
         return 1;
     }
@@ -174,7 +174,7 @@ public class KDCommand {
         PlayerStats stats = PlayerStatsManager.getStats(player.getUUID());
         stats.addHeads(count);
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7e+%d head(s) \u00a77for \u00a7e%s",
+                String.format("\u00a76[现代战争] \u00a7e+%d 爆头 \u00a77已记录给 \u00a7e%s",
                         count, player.getScoreboardName())), false);
         return 1;
     }
@@ -184,7 +184,7 @@ public class KDCommand {
     private static int uploadAll(CommandSourceStack source) {
         var allStats = PlayerStatsManager.getAllStats();
         if (allStats.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("\u00a76[ModernWar] \u00a77No data to upload."), false);
+            source.sendSuccess(() -> Component.literal("\u00a76[现代战争] \u00a77没有可上传的数据。"), false);
             return 0;
         }
 
@@ -200,7 +200,7 @@ public class KDCommand {
 
         int finalCount = count;
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7aUploading %d player(s) to API...", finalCount)), false);
+                String.format("\u00a76[现代战争] \u00a7a正在向 API 上传 %d 名玩家的战绩...", finalCount)), false);
         return 1;
     }
 
@@ -210,14 +210,14 @@ public class KDCommand {
 
         KDApiClient.uploadPlayer(name, stats).thenAccept(success -> {
             String msg = success
-                    ? String.format("\u00a76[ModernWar] \u00a7aUploaded \u00a7e%s \u00a7a\u2192 KD: %.2f", name, stats.getApiKD())
-                    : String.format("\u00a76[ModernWar] \u00a7cUpload failed for \u00a7e%s", name);
+                    ? String.format("\u00a76[现代战争] \u00a7a已上传 \u00a7e%s \u00a7a\u2192 KD: %.2f", name, stats.getApiKD())
+                    : String.format("\u00a76[现代战争] \u00a7c上传失败: \u00a7e%s", name);
             target.getServer().execute(() ->
                     source.sendSuccess(() -> Component.literal(msg), false));
         });
 
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a77Uploading \u00a7e%s \u00a77...", name)), false);
+                String.format("\u00a76[现代战争] \u00a77正在上传 \u00a7e%s \u00a77的战绩...", name)), false);
         return 1;
     }
 
@@ -235,7 +235,7 @@ public class KDCommand {
         stats.setAssists(assists);
 
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[ModernWar] \u00a7e%s \u00a77stats set \u2192 K:%d A:%d D:%d W:%d L:%d H:%d KD:%.2f",
+                String.format("\u00a76[现代战争] \u00a7e%s \u00a77的战绩已设置 \u2192 击杀:%d 助攻:%d 死亡:%d 胜:%d 负:%d 爆头:%d KD:%.2f",
                         target.getScoreboardName(), kills, assists, deaths, wins, losses,
                         heads, stats.getApiKD())), false);
         return 1;

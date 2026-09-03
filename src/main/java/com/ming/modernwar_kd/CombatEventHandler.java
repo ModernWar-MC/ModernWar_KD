@@ -85,7 +85,7 @@ public class CombatEventHandler {
         }
 
         PlayerStats victimStats = PlayerStatsManager.getStats(victimUUID);
-        LOGGER.info("ModernWar_KD: Player {} died. [K: {}, A: {}, D: {}, KD: {}]",
+        LOGGER.info("ModernWar_KD: 玩家 {} 死亡。 [击杀: {}, 助攻: {}, 死亡: {}, KD: {}]",
                 victim.getScoreboardName(),
                 victimStats.getKills(), victimStats.getAssists(),
                 victimStats.getDeaths(), String.format("%.2f", victimStats.getKD()));

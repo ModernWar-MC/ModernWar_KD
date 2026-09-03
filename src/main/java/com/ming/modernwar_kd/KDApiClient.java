@@ -45,7 +45,7 @@ public class KDApiClient {
                                                           String rankLabel, PlayerStats stats) {
         String url = Config.apiUrl;
         if (url == null || url.isBlank()) {
-            LOGGER.error("ModernWar_KD: API URL not configured.");
+            LOGGER.error("ModernWar_KD: 尚未配置 API URL。");
             return CompletableFuture.completedFuture(false);
         }
 
@@ -74,17 +74,17 @@ public class KDApiClient {
                 .thenApply(response -> {
                     int code = response.statusCode();
                     if (code >= 200 && code < 300) {
-                        LOGGER.info("ModernWar_KD: Uploaded stats for {} -> {} (HTTP {})",
+                        LOGGER.info("ModernWar_KD: 已上传 {} 的战绩 -> {} (HTTP {})",
                                 playerName, url, code);
                         return true;
                     } else {
-                        LOGGER.warn("ModernWar_KD: Upload failed for {} -> HTTP {}: {}",
+                        LOGGER.warn("ModernWar_KD: 上传失败 {} -> HTTP {}: {}",
                                 playerName, code, response.body());
                         return false;
                     }
                 })
                 .exceptionally(ex -> {
-                    LOGGER.error("ModernWar_KD: Upload error for {}: {}", playerName, ex.getMessage());
+                    LOGGER.error("ModernWar_KD: 上传 {} 出错: {}", playerName, ex.getMessage());
                     return false;
                 });
     }

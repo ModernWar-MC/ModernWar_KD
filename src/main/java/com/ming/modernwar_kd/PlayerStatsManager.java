@@ -57,9 +57,9 @@ public class PlayerStatsManager {
             try (Writer writer = Files.newBufferedWriter(dataFile)) {
                 GSON.toJson(STATS, writer);
             }
-            LOGGER.info("ModernWar_KD: Saved stats for {} players.", STATS.size());
+            LOGGER.info("ModernWar_KD: 已保存 {} 名玩家的战绩。", STATS.size());
         } catch (IOException e) {
-            LOGGER.error("ModernWar_KD: Failed to save stats", e);
+            LOGGER.error("ModernWar_KD: 保存战绩失败", e);
         }
     }
 
@@ -73,9 +73,9 @@ public class PlayerStatsManager {
                 if (loaded != null) {
                     STATS.putAll(loaded);
                 }
-                LOGGER.info("ModernWar_KD: Loaded stats for {} players.", STATS.size());
+                LOGGER.info("ModernWar_KD: 已加载 {} 名玩家的战绩。", STATS.size());
             } catch (IOException e) {
-                LOGGER.error("ModernWar_KD: Failed to load stats", e);
+                LOGGER.error("ModernWar_KD: 加载战绩失败", e);
             }
         }
     }

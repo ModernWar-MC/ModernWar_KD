@@ -118,13 +118,13 @@ public class Modernwar_kd {
     public void onServerStarted(ServerStartedEvent event) {
         MinecraftServer server = event.getServer();
         PlayerStatsManager.load(server);
-        LOGGER.info("ModernWar_KD: KD stats loaded.");
+        LOGGER.info("ModernWar_KD: KD 战绩已加载。");
     }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         PlayerStatsManager.save(event.getServer());
-        LOGGER.info("ModernWar_KD: KD stats saved.");
+        LOGGER.info("ModernWar_KD: KD 战绩已保存。");
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent

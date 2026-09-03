@@ -43,7 +43,7 @@ public class MatchManager {
      */
     public static void startMatch(MinecraftServer server) {
         if (matchActive) {
-            LOGGER.warn("ModernWar_KD: Match already active, restarting.");
+            LOGGER.warn("ModernWar_KD: 对局已在进行中，正在重新开始。");
         }
 
         matchActive = true;
@@ -63,7 +63,7 @@ public class MatchManager {
             TEAM_ASSIGNMENTS.putIfAbsent(uuid, "a");
         }
 
-        LOGGER.info("ModernWar_KD: Match started. {} players snapshotted.", SNAPSHOTS.size());
+        LOGGER.info("ModernWar_KD: 对局已开始。已快照 {} 名玩家。", SNAPSHOTS.size());
     }
 
     /**
@@ -108,9 +108,9 @@ public class MatchManager {
             }
 
             // log match result
-            LOGGER.info("ModernWar_KD: [Match] {} (team {}) - K:{}/D:{}/A:{}/H:{} {}",
+            LOGGER.info("ModernWar_KD: [对局] {} ({} 队) - 击杀:{}/死亡:{}/助攻:{}/爆头:{} {}",
                     snap.playerName(), team, matchKills, matchDeaths, matchAssists, matchHeads,
-                    team.equals(winner) ? "WIN" : "LOSS");
+                    team.equals(winner) ? "胜" : "负");
 
             // upload to API
             KDApiClient.uploadPlayer(snap.playerName(), current);
@@ -121,7 +121,7 @@ public class MatchManager {
         TEAM_ASSIGNMENTS.clear();
         SNAPSHOTS.clear();
 
-        LOGGER.info("ModernWar_KD: Match ended. Winner: team {}. Duration: {}ms. Uploaded: {} players.",
+        LOGGER.info("ModernWar_KD: 对局已结束。胜方: {} 队。时长: {}ms。已上传: {} 名玩家。",
                 winner, duration, uploaded);
         return uploaded;
     }
