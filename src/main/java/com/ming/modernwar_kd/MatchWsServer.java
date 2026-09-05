@@ -272,13 +272,14 @@ public class MatchWsServer {
         while ((b = in.read()) != -1) {
             buf.write(b);
             if (last == '\r' && b == '\n') {
-                // check for the blank line ending the header (CRLF CRLF)
+                // An HTTP header ends with a blank line: CRLF CRLF.
                 if (buf.size() >= 4) {
                     byte[] arr = buf.toByteArray();
-                    if (arr[buf.size() - 4] == '\n'
-                            && arr[buf.size() - 3] == '\r'
-                            && arr[buf.size() - 2] == '\n'
-                            && arr[buf.size() - 1] == '\r') {
+                    int end = arr.length;
+                    if (arr[end - 4] == '\r'
+                            && arr[end - 3] == '\n'
+                            && arr[end - 2] == '\r'
+                            && arr[end - 1] == '\n') {
                         return new String(arr, StandardCharsets.ISO_8859_1);
                     }
                 }
