@@ -1,6 +1,7 @@
 package com.ming.modernwar_kd;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -14,6 +15,8 @@ public class MatchManager {
 
     private static boolean matchActive = false;
     private static long matchStartTime = 0;
+    private static String matchId = "";
+    private static String matchOperator = "";
 
     // team assignments: UUID -> "a" or "b"
     private static final Map<UUID, String> TEAM_ASSIGNMENTS = new ConcurrentHashMap<>();
@@ -42,16 +45,36 @@ public class MatchManager {
      * Default: everyone is on team "a" unless assigned.
      */
     public static void startMatch(MinecraftServer server) {
+        startMatch(server, Config.operatorName);
+    }
+
+    /**
+     * Start a new match. Snapshots all currently online players and balances
+     * teams evenly by online player count (first half -> A, rest -> B; odd
+     * count gives A the extra player). Players holding the match-view
+     * permission (LuckPerms) receive the match-info broadcast.
+     */
+    public static void startMatch(MinecraftServer server, String operatorName) {
         if (matchActive) {
             LOGGER.warn("ModernWar_KD: 对局已在进行中，正在重新开始。");
         }
 
         matchActive = true;
         matchStartTime = System.currentTimeMillis();
+        matchId = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmm").format(new Date(matchStartTime));
+        matchOperator = operatorName == null || operatorName.isBlank() ? Config.operatorName : operatorName;
         TEAM_ASSIGNMENTS.clear();
         SNAPSHOTS.clear();
 
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+        // Balance teams evenly by online player count:
+        // sort by name for a deterministic split, first half -> A, second half -> B.
+        // Odd player count: A gets the extra player.
+        List<ServerPlayer> players = new ArrayList<>(server.getPlayerList().getPlayers());
+        players.sort(Comparator.comparing(ServerPlayer::getScoreboardName));
+        int teamASize = (players.size() + 1) / 2;
+
+        for (int i = 0; i < players.size(); i++) {
+            ServerPlayer player = players.get(i);
             UUID uuid = player.getUUID();
             String name = player.getScoreboardName();
             PlayerStats stats = PlayerStatsManager.getStats(uuid);
@@ -60,10 +83,65 @@ public class MatchManager {
                     stats.getKills(), stats.getAssists(), stats.getDeaths(),
                     stats.getHeads(), stats.getWins(), stats.getLosses()
             ));
-            TEAM_ASSIGNMENTS.putIfAbsent(uuid, "a");
+            TEAM_ASSIGNMENTS.put(uuid, i < teamASize ? "a" : "b");
         }
 
-        LOGGER.info("ModernWar_KD: 对局已开始。已快照 {} 名玩家。", SNAPSHOTS.size());
+        long aCount = TEAM_ASSIGNMENTS.values().stream().filter("a"::equals).count();
+        long bCount = TEAM_ASSIGNMENTS.values().stream().filter("b"::equals).count();
+        LOGGER.info("ModernWar_KD: 对局已开始。已快照 {} 名玩家，A 队 {} 人 / B 队 {} 人。",
+                SNAPSHOTS.size(), aCount, bCount);
+
+        announceMatchStart(server);
+    }
+
+    /**
+     * Broadcast the match-info block to every player that holds the
+     * LuckPerms view permission:
+     *
+     * 【地图名称】
+     * 队伍A：
+     *   player1
+     * 队伍B：
+     *   player2
+     * 游戏开始 开始时间码：<yyyyMMdd'T'HHmm>_<操作者ID>_<地图名称>
+     * 游戏开始
+     */
+    private static void announceMatchStart(MinecraftServer server) {
+        String mapName = Config.mapName;
+        String code = matchId + "_" + matchOperator + "_" + mapName;
+
+        List<String> teamA = new ArrayList<>();
+        List<String> teamB = new ArrayList<>();
+        for (Map.Entry<UUID, PlayerSnapshot> entry : SNAPSHOTS.entrySet()) {
+            if ("b".equals(TEAM_ASSIGNMENTS.getOrDefault(entry.getKey(), "a"))) {
+                teamB.add(entry.getValue().playerName());
+            } else {
+                teamA.add(entry.getValue().playerName());
+            }
+        }
+        teamA.sort(String::compareTo);
+        teamB.sort(String::compareTo);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\u00a76【").append(mapName).append("】");
+        sb.append("\n\u00a7e队伍A：");
+        if (teamA.isEmpty()) sb.append("\n\u00a77  (无)");
+        for (String name : teamA) sb.append("\n\u00a7b  ").append(name);
+        sb.append("\n\u00a7e队伍B：");
+        if (teamB.isEmpty()) sb.append("\n\u00a77  (无)");
+        for (String name : teamB) sb.append("\n\u00a7b  ").append(name);
+        sb.append("\n\u00a7e游戏开始 开始时间码：\u00a7f").append(code);
+        sb.append("\n\u00a7b游戏开始");
+
+        LOGGER.info("ModernWar_KD: 对局公告（仅权限组可见）:\n{}", sb);
+
+        Component message = Component.literal(sb.toString());
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (LuckPermsHelper.canViewMatchInfo(player)) {
+                player.sendSystemMessage(message);
+                LOGGER.debug("ModernWar_KD: 已向 {} 发送对局公告。", player.getScoreboardName());
+            }
+        }
     }
 
     /**
@@ -87,6 +165,7 @@ public class MatchManager {
         String winner = winningTeam.toLowerCase();
         long duration = System.currentTimeMillis() - matchStartTime;
         int uploaded = 0;
+        String matchMode = "对战";
 
         for (Map.Entry<UUID, PlayerSnapshot> entry : SNAPSHOTS.entrySet()) {
             UUID uuid = entry.getKey();
@@ -101,7 +180,8 @@ public class MatchManager {
 
             // assign win/loss based on team
             String team = TEAM_ASSIGNMENTS.getOrDefault(uuid, "a");
-            if (team.equals(winner)) {
+            boolean won = team.equals(winner);
+            if (won) {
                 current.addWins(1);
             } else {
                 current.addLosses(1);
@@ -110,7 +190,22 @@ public class MatchManager {
             // log match result
             LOGGER.info("ModernWar_KD: [对局] {} ({} 队) - 击杀:{}/死亡:{}/助攻:{}/爆头:{} {}",
                     snap.playerName(), team, matchKills, matchDeaths, matchAssists, matchHeads,
-                    team.equals(winner) ? "胜" : "负");
+                    won ? "胜" : "负");
+
+            // send match summary to the player if still online
+            ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player != null) {
+                player.sendSystemMessage(Component.literal(
+                        "\u00a76\u00a7l========== 对局信息 " + matchId + " =========="));
+                player.sendSystemMessage(Component.literal(
+                        String.format("\u00a77模式: \u00a7e%s \u00a77| 队伍: \u00a7b%s 队",
+                                matchMode, team.toUpperCase())));
+                player.sendSystemMessage(Component.literal(
+                        String.format("\u00a7e击杀: \u00a7c%d \u00a77/ \u00a7e死亡: \u00a7c%d \u00a77/ \u00a7e助攻: \u00a7a%d \u00a77/ \u00a7e爆头: \u00a7e%d",
+                                matchKills, matchDeaths, matchAssists, matchHeads)));
+                player.sendSystemMessage(Component.literal(
+                        won ? "\u00a7a本局获胜 (胜)" : "\u00a7c本局失利 (负)"));
+            }
 
             // upload to API
             KDApiClient.uploadPlayer(snap.playerName(), current);

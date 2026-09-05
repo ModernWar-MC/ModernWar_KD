@@ -62,6 +62,36 @@ public class Config
             .comment("Player rank label for API uploads.")
             .define("rankLabel", "钻石");
 
+    // Whether to enable the inbound API used by external backends/plugins.
+    public static final ForgeConfigSpec.BooleanValue API_ENABLED = BUILDER
+            .comment("Enable the inbound WebSocket API server (lets an external backend trigger match start/end).")
+            .define("apiEnabled", true);
+
+    // Port for the inbound API server.
+    public static final ForgeConfigSpec.IntValue API_PORT = BUILDER
+            .comment("TCP port for the inbound WebSocket API server (mod is the server, backend connects).")
+            .defineInRange("apiPort", 8080, 1, 65535);
+
+    // Optional auth token. Empty disables auth checking.
+    public static final ForgeConfigSpec.ConfigValue<String> API_TOKEN = BUILDER
+            .comment("Optional auth token; clients must include it as {\"token\":\"...\"} in each first message. Leave empty to disable.")
+            .define("apiToken", "");
+
+    // Map name shown in the match-info broadcast.
+    public static final ForgeConfigSpec.ConfigValue<String> MAP_NAME = BUILDER
+            .comment("Map name shown in the match-info broadcast.")
+            .define("mapName", "现代战争");
+
+    // LuckPerms permission node required to see match-info broadcasts.
+    public static final ForgeConfigSpec.ConfigValue<String> VIEW_PERMISSION = BUILDER
+            .comment("LuckPerms permission node. Players with (or in a group granted) this node see the match-info broadcasts. Also registered with Forge's PermissionAPI.")
+            .define("viewPermission", "modernwar_kd.match.view");
+
+    // Player ID embedded in the match code when started via WebSocket.
+    public static final ForgeConfigSpec.ConfigValue<String> OPERATOR_NAME = BUILDER
+            .comment("Player ID used in the match code (timestamp_operator_map) when the match is started via WebSocket. /match start uses the issuing player's name instead.")
+            .define("operatorName", "Server");
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean logDirtBlock;
@@ -73,6 +103,12 @@ public class Config
     public static String apiUrl;
     public static String season;
     public static String rankLabel;
+    public static boolean apiEnabled;
+    public static int apiPort;
+    public static String apiToken;
+    public static String mapName;
+    public static String viewPermission;
+    public static String operatorName;
 
     private static boolean validateItemName(final Object obj)
     {
@@ -96,5 +132,11 @@ public class Config
         apiUrl = API_URL.get();
         season = SEASON.get();
         rankLabel = RANK_LABEL.get();
+        apiEnabled = API_ENABLED.get();
+        apiPort = API_PORT.get();
+        apiToken = API_TOKEN.get();
+        mapName = MAP_NAME.get();
+        viewPermission = VIEW_PERMISSION.get();
+        operatorName = OPERATOR_NAME.get();
     }
 }

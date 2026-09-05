@@ -65,11 +65,16 @@ public class MatchCommand {
     }
 
     private static int startMatch(CommandSourceStack source, net.minecraft.server.MinecraftServer server) {
-        MatchManager.startMatch(server);
+        String operator = source.getEntity() instanceof ServerPlayer op ? op.getScoreboardName() : "Server";
+        MatchManager.startMatch(server, operator);
         int count = MatchManager.getMatchPlayers().size();
+        long teamB = MatchManager.getMatchPlayers().stream()
+                .filter(uuid -> "b".equals(MatchManager.getTeam(uuid))).count();
+        long teamA = count - teamB;
         source.sendSuccess(() -> Component.literal(
-                String.format("\u00a76[现代战争] \u00a7a对局已开始! \u00a7e%d 名玩家 \u00a77已记录。",
-                        count)), false);
+                String.format("\u00a76[现代战争] \u00a7a对局已开始! \u00a7e%d 名玩家 \u00a77已记录。"
+                        + "\u00a7bA 队 %d 人 \u00a77/ \u00a7cB 队 %d 人",
+                        count, teamA, teamB)), false);
         return 1;
     }
 

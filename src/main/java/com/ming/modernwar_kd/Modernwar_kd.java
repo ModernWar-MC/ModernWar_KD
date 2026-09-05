@@ -118,11 +118,13 @@ public class Modernwar_kd {
     public void onServerStarted(ServerStartedEvent event) {
         MinecraftServer server = event.getServer();
         PlayerStatsManager.load(server);
+        MatchWsServer.start(server);
         LOGGER.info("ModernWar_KD: KD 战绩已加载。");
     }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
+        MatchWsServer.stop();
         PlayerStatsManager.save(event.getServer());
         LOGGER.info("ModernWar_KD: KD 战绩已保存。");
     }
